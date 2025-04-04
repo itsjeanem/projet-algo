@@ -1,5 +1,12 @@
 {
   "vertices": 5,
+  "nodes": {
+    "0": "Abidjan",
+    "1": "Bouaké",
+    "2": "Daloa",
+    "3": "San-Pédro",
+    "4": "Yamoussoukro"
+  },
   "edges": [
     { "src": 0, "dest": 1, "distance": 12.3, "baseTime": 18, "cost": 6.2, "roadType": 1, "reliability": 0.85, "restrictions": 0 },
     { "src": 0, "dest": 2, "distance": 8.7, "baseTime": 12, "cost": 4.1, "roadType": 0, "reliability": 0.78, "restrictions": 1 },

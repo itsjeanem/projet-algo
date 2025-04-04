@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>      // Inclure pour strdup
 #include "cJSON/cJSON.h" // Inclure la bibliothèque cJSON
 
 // Définition des structures
@@ -30,22 +31,43 @@ typedef struct AdjList
 } AdjList;
 
 // Structure pour le graphe
+// typedef struct Graph
+// {
+//     int V;          // nombre de sommets
+//     AdjList *array; // tableau des listes d’adjacence
+//                     // Informations supplementaires sur les sommets
+// } Graph;
 typedef struct Graph
 {
-    int V;          // nombre de sommets
-    AdjList *array; // tableau des listes d’adjacence
-                    // Informations supplementaires sur les sommets
+    int V;
+    AdjList *array;
+    char **cityNames; // Tableau des noms des villes
 } Graph;
 
 // Fonction pour créer un graphe avec V sommets
+// Graph *createGraph(int V)
+// {
+//     Graph *graph = (Graph *)malloc(sizeof(Graph));
+//     graph->V = V;
+//     graph->array = (AdjList *)malloc(V * sizeof(AdjList));
+
+//     for (int i = 0; i < V; i++)
+//         graph->array[i].head = NULL; // Initialisation des listes vides
+
+//     return graph;
+// }
 Graph *createGraph(int V)
 {
     Graph *graph = (Graph *)malloc(sizeof(Graph));
     graph->V = V;
     graph->array = (AdjList *)malloc(V * sizeof(AdjList));
+    graph->cityNames = (char **)malloc(V * sizeof(char *)); // Allouer un tableau de chaînes
 
     for (int i = 0; i < V; i++)
-        graph->array[i].head = NULL; // Initialisation des listes vides
+    {
+        graph->array[i].head = NULL;
+        graph->cityNames[i] = NULL; // Initialiser à NULL
+    }
 
     return graph;
 }
@@ -101,6 +123,18 @@ Graph *loadGraphFromJSON(const char *filename)
     int V = cJSON_GetObjectItem(json, "vertices")->valueint;
     Graph *graph = createGraph(V);
 
+    // Lire les noms des villes
+    cJSON *nodes = cJSON_GetObjectItem(json, "nodes");
+    if (nodes)
+    {
+        cJSON *node;
+        cJSON_ArrayForEach(node, nodes)
+        {
+            int index = atoi(node->string);                      // Convertir la clé en entier
+            graph->cityNames[index] = strdup(node->valuestring); // Copier le nom
+        }
+    }
+
     // Lire la liste des arêtes
     cJSON *edges = cJSON_GetObjectItem(json, "edges");
     int edgeCount = cJSON_GetArraySize(edges);
@@ -128,16 +162,34 @@ Graph *loadGraphFromJSON(const char *filename)
 }
 
 // Fonction pour afficher le graphe
+// void printGraph(Graph *graph)
+// {
+//     for (int i = 0; i < graph->V; i++)
+//     {
+//         AdjListNode *pCrawl = graph->array[i].head;
+//         printf("Sommet %d:", i);
+//         while (pCrawl)
+//         {
+//             printf(" -> %d (dist: %.2f km, cout: %.2f)",
+//                    pCrawl->dest, pCrawl->attr.distance, pCrawl->attr.cost);
+//             pCrawl = pCrawl->next;
+//         }
+//         printf("\n");
+//     }
+// }
+// Modifier printGraph pour afficher les noms des villes
 void printGraph(Graph *graph)
 {
     for (int i = 0; i < graph->V; i++)
     {
+        printf("Ville %s:", graph->cityNames[i] ? graph->cityNames[i] : "Inconnue");
+
         AdjListNode *pCrawl = graph->array[i].head;
-        printf("Sommet %d:", i);
         while (pCrawl)
         {
-            printf(" -> %d (dist: %.2f km, cout: %.2f)",
-                   pCrawl->dest, pCrawl->attr.distance, pCrawl->attr.cost);
+            printf(" -> %s (dist: %.2f km, coût: %.2f)",
+                   graph->cityNames[pCrawl->dest] ? graph->cityNames[pCrawl->dest] : "Inconnue",
+                   pCrawl->attr.distance, pCrawl->attr.cost);
             pCrawl = pCrawl->next;
         }
         printf("\n");
@@ -156,7 +208,9 @@ void freeGraph(Graph *graph)
             pCrawl = pCrawl->next;
             free(temp); // Libère chaque nœud
         }
+        free(graph->cityNames[i]); // Libère chaque nom de ville
     }
+    free(graph->cityNames);
     free(graph->array); // Libère le tableau de listes
     free(graph);        // Libère la structure du graphe
 }
@@ -191,7 +245,7 @@ int main()
         return 1;
     }
 
-    printf("Graphe charge depuis JSON :\n");
+    printf("Graphe chargé depuis JSON :\n");
     printGraph(graph);
 
     freeGraph(graph);
