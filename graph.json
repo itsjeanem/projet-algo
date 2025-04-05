@@ -8,10 +8,14 @@
     "4": "Yamoussoukro"
   },
   "edges": [
-    { "src": 0, "dest": 1, "distance": 12.3, "baseTime": 18, "cost": 6.2, "roadType": 1, "reliability": 0.85, "restrictions": 0 },
-    { "src": 0, "dest": 2, "distance": 8.7, "baseTime": 12, "cost": 4.1, "roadType": 0, "reliability": 0.78, "restrictions": 1 },
-    { "src": 1, "dest": 3, "distance": 15.4, "baseTime": 20, "cost": 7.3, "roadType": 2, "reliability": 0.92, "restrictions": 0 },
-    { "src": 2, "dest": 4, "distance": 9.8, "baseTime": 14, "cost": 5.0, "roadType": 1, "reliability": 0.81, "restrictions": 1 },
-    { "src": 3, "dest": 4, "distance": 11.6, "baseTime": 16, "cost": 6.5, "roadType": 0, "reliability": 0.88, "restrictions": 0 }
+    { "src": 0, "dest": 1, "distance": 378.0, "baseTime": 317, "cost": 6100.0, "roadType": 0, "reliability": 0.9, "restrictions": 0 },
+    { "src": 0, "dest": 2, "distance": 377.0, "baseTime": 251, "cost": 6100.0, "roadType": 0, "reliability": 0.85, "restrictions": 0 },
+    { "src": 0, "dest": 4, "distance": 268.0, "baseTime": 234, "cost": 4000.0, "roadType": 1, "reliability": 0.8, "restrictions": 1 },
+    { "src": 0, "dest": 3, "distance": 334.0, "baseTime": 281, "cost": 6500.0, "roadType": 0, "reliability": 0.88, "restrictions": 0 },
+    { "src": 1, "dest": 2, "distance": 238.0, "baseTime": 232, "cost": 6000.0, "roadType": 1, "reliability": 0.87, "restrictions": 0 },
+    { "src": 1, "dest": 3, "distance": 509.0, "baseTime": 516, "cost": 9100.0, "roadType": 2, "reliability": 0.92, "restrictions": 0 },
+    { "src": 1, "dest": 4, "distance": 110.0, "baseTime": 85, "cost": 2000.0, "roadType": 0, "reliability": 0.95, "restrictions": 0 },
+    { "src": 2, "dest": 4, "distance": 139.0, "baseTime": 126, "cost": 3000.0, "roadType": 1, "reliability": 0.83, "restrictions": 1 },
+    { "src": 2, "dest": 3, "distance": 241.9, "baseTime": 204, "cost": null, "roadType": 0, "reliability": 0.89, "restrictions": 0 }
   ]
 }
