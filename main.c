@@ -13,7 +13,7 @@ typedef struct EdgeAttr
     int roadType;      // type de route (0: asphalte, 1: laterite , etc.)
     float reliability; // indice de fiabilite [0,1]
     int restrictions;  // restrictions codees en bits
-                       // Autres attributs pertinents
+    int toll;          // nombre de peages
 } EdgeAttr;
 
 // Structure pour un noeud de la liste d’adjacence
@@ -180,20 +180,33 @@ Graph *loadGraphFromJSON(const char *filename)
 // Modifier printGraph pour afficher les noms des villes
 void printGraph(Graph *graph)
 {
+    printf("--------------------------------------------------------\n");
+    printf("|\t\t\tGRAPHE DES VILLES\t\t\t|\n");
+    printf("--------------------------------------------------------\n\n");
+
     for (int i = 0; i < graph->V; i++)
     {
-        printf("Ville %s:", graph->cityNames[i] ? graph->cityNames[i] : "Inconnue");
-
+        printf("Ville de depart : %s\n", graph->cityNames[i] ? graph->cityNames[i] : "Inconnue");
         AdjListNode *pCrawl = graph->array[i].head;
-        while (pCrawl)
+
+        if (pCrawl == NULL)
         {
-            printf(" -> %s (dist: %.2f km, coût: %.2f)",
-                   graph->cityNames[pCrawl->dest] ? graph->cityNames[pCrawl->dest] : "Inconnue",
-                   pCrawl->attr.distance, pCrawl->attr.cost);
-            pCrawl = pCrawl->next;
+            printf("   Aucune destination disponible depuis cette ville.\n");
+        }
+        else
+        {
+            printf("   Destinations:\n");
+            while (pCrawl)
+            {
+                printf("   -> %s (Distance: %.2f km, Cost: %.2f XOF)\n",
+                       graph->cityNames[pCrawl->dest] ? graph->cityNames[pCrawl->dest] : "Inconnue",
+                       pCrawl->attr.distance, pCrawl->attr.cost);
+                pCrawl = pCrawl->next;
+            }
         }
         printf("\n");
     }
+    printf("--------------------------------------------------------\n");
 }
 
 // Fonction pour libérer la mémoire allouée au graphe
