@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>      // Inclure pour strdup
+#include <string.h>
+#include <stdbool.h>
+#define INF 1e9          // Représente l'infini
 #include "cJSON/cJSON.h" // Inclure la bibliothèque cJSON
 
 // Définition des structures
@@ -30,13 +32,6 @@ typedef struct AdjList
     AdjListNode *head; // tete de la liste
 } AdjList;
 
-// Structure pour le graphe
-// typedef struct Graph
-// {
-//     int V;          // nombre de sommets
-//     AdjList *array; // tableau des listes d’adjacence
-//                     // Informations supplementaires sur les sommets
-// } Graph;
 typedef struct Graph
 {
     int V;
@@ -44,18 +39,6 @@ typedef struct Graph
     char **cityNames; // Tableau des noms des villes
 } Graph;
 
-// Fonction pour créer un graphe avec V sommets
-// Graph *createGraph(int V)
-// {
-//     Graph *graph = (Graph *)malloc(sizeof(Graph));
-//     graph->V = V;
-//     graph->array = (AdjList *)malloc(V * sizeof(AdjList));
-
-//     for (int i = 0; i < V; i++)
-//         graph->array[i].head = NULL; // Initialisation des listes vides
-
-//     return graph;
-// }
 Graph *createGraph(int V)
 {
     Graph *graph = (Graph *)malloc(sizeof(Graph));
@@ -161,22 +144,6 @@ Graph *loadGraphFromJSON(const char *filename)
     return graph;
 }
 
-// Fonction pour afficher le graphe
-// void printGraph(Graph *graph)
-// {
-//     for (int i = 0; i < graph->V; i++)
-//     {
-//         AdjListNode *pCrawl = graph->array[i].head;
-//         printf("Sommet %d:", i);
-//         while (pCrawl)
-//         {
-//             printf(" -> %d (dist: %.2f km, cout: %.2f)",
-//                    pCrawl->dest, pCrawl->attr.distance, pCrawl->attr.cost);
-//             pCrawl = pCrawl->next;
-//         }
-//         printf("\n");
-//     }
-// }
 // Modifier printGraph pour afficher les noms des villes
 void printGraph(Graph *graph)
 {
@@ -228,28 +195,173 @@ void freeGraph(Graph *graph)
     free(graph);        // Libère la structure du graphe
 }
 
-// Programme principal
-int main()
+// >>>>>>>>>> Floyd-Warshall <<<<<<<<<<<
+// Fonction pour trouver le chemin le plus court entre tous les paires de sommets
+void floydWarshall(Graph *graph, float dist[][graph->V])
 {
+    int V = graph->V;
 
-    /*
-   int V = 5; // Nombre de sommets
-  Graph *graph = createGraph(V);
+    // Initialisation
+    for (int i = 0; i < V; i++)
+    {
+        for (int j = 0; j < V; j++)
+        {
+            dist[i][j] = (i == j) ? 0 : INF;
+        }
 
-  // Création d'arêtes avec des attributs
-  EdgeAttr attr1 = {10.5, 15.0, 5.0, 0, 0.9, 0};
-  EdgeAttr attr2 = {7.2, 10.0, 3.5, 1, 0.8, 1};
+        AdjListNode *pCrawl = graph->array[i].head;
+        while (pCrawl)
+        {
+            dist[i][pCrawl->dest] = pCrawl->attr.distance; // ou baseTime / cost selon le critère
+            pCrawl = pCrawl->next;
+        }
+    }
 
-  addEdge(graph, 0, 1, attr1);
-  addEdge(graph, 0, 2, attr2);
-  addEdge(graph, 1, 3, attr1);
-  addEdge(graph, 2, 4, attr2);
-  addEdge(graph, 3, 4, attr1);
+    // Algorithme de Floyd-Warshall
+    for (int k = 0; k < V; k++)
+    {
+        for (int i = 0; i < V; i++)
+        {
+            for (int j = 0; j < V; j++)
+            {
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+    }
+}
 
-  // Affichage du graphe
-  printGraph(graph);
-  freeGraph(graph); // Libération de la mémoire
-  */
+// Fonction pour afficher les distances
+void printAllPairsShortestPaths(Graph *graph, float dist[][graph->V])
+{
+    printf("\n===== Plus courts chemins entre toutes les paires de villes (en km) =====\n");
+
+    for (int i = 0; i < graph->V; i++)
+    {
+        for (int j = 0; j < graph->V; j++)
+        {
+            printf("De %-15s à %-15s : ", graph->cityNames[i], graph->cityNames[j]);
+            if (dist[i][j] == INF)
+                printf("Aucun chemin\n");
+            else
+                printf("%.2f km\n", dist[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
+// Fonction pour trouver le chemin le plus court à partir d'une source
+void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
+{
+    int V = graph->V;
+
+    // Initialisation
+    for (int i = 0; i < V; i++)
+    {
+        dist[i] = INF;
+        pred[i] = -1;
+    }
+    dist[src] = 0;
+
+    // Relaxation des arêtes V-1 fois
+    for (int i = 1; i <= V - 1; i++)
+    {
+        for (int u = 0; u < V; u++)
+        {
+            AdjListNode *node = graph->array[u].head;
+            while (node)
+            {
+                int v = node->dest;
+
+                // float weight = node->attr.distance; // ou node->attr.cost / baseTime
+                float weight = node->attr.cost + 10 * node->attr.toll;
+                float time = node->attr.baseTime;
+
+                // Appliquer une contrainte sur le temps
+                if (time <= maxTime && dist[u] + weight < dist[v])
+                {
+                    dist[v] = dist[u] + weight;
+                    pred[v] = u;
+                }
+
+                node = node->next;
+            }
+        }
+    }
+
+    // Vérification des cycles négatifs (facultatif ici)
+    for (int u = 0; u < V; u++)
+    {
+        AdjListNode *node = graph->array[u].head;
+        while (node)
+        {
+            int v = node->dest;
+            // float weight = node->attr.distance;
+            float weight = node->attr.cost + 10 * node->attr.toll;
+
+            if (dist[u] + weight < dist[v])
+            {
+                printf("Attention : présence d’un cycle de poids négatif.\n");
+                return;
+            }
+
+            node = node->next;
+        }
+    }
+}
+
+// Fonction pour afficher le chemin le plus court
+void printBellmanResults(Graph *graph, int src, float *dist, int *pred)
+{
+    printf("\n===== Chemins optimaux depuis %s (avec contraintes) =====\n", graph->cityNames[src]);
+
+    for (int i = 0; i < graph->V; i++)
+    {
+        printf("Vers %-15s : ", graph->cityNames[i]);
+
+        if (dist[i] == INF)
+        {
+            printf("Aucun chemin respectant les contraintes.\n");
+        }
+        else
+        {
+            float totalTime = 0;
+            float totalCost = 0;
+            int path[graph->V];
+            int count = 0;
+
+            for (int v = i; v != -1; v = pred[v])
+                path[count++] = v;
+
+            for (int j = count - 1; j > 0; j--)
+            {
+                AdjListNode *node = graph->array[path[j]].head;
+                while (node && node->dest != path[j - 1])
+                    node = node->next;
+
+                if (node)
+                {
+                    totalTime += node->attr.baseTime;
+                    totalCost += node->attr.cost + 10 * node->attr.toll;
+                }
+            }
+
+            printf("Temps = %.2f, Cout = %.2f XOF, Chemin = ", totalTime, totalCost);
+            for (int j = count - 1; j >= 0; j--)
+            {
+                printf("%s", graph->cityNames[path[j]]);
+                if (j > 0)
+                    printf(" -> ");
+            }
+            printf("\n");
+        }
+    }
+}
+
+// Programme principal
+int main(int argc, char *argv[])
+{
 
     Graph *graph = loadGraphFromJSON("graph.json");
     if (!graph)
@@ -258,8 +370,22 @@ int main()
         return 1;
     }
 
-    printf("Graphe chargé depuis JSON :\n");
     printGraph(graph);
+
+    // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
+    // float dist[graph->V][graph->V];
+    // floydWarshall(graph, dist);
+    // printAllPairsShortestPaths(graph, dist);
+
+    // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
+    int src = 0;         // Abidjan
+    float maxTime = 400; // En minutes, par exemple
+
+    float dist[graph->V];
+    int pred[graph->V];
+
+    bellmanFord(graph, src, dist, pred, maxTime);
+    printBellmanResults(graph, src, dist, pred);
 
     freeGraph(graph);
 
