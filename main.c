@@ -2,7 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#define INF 1e9          // Représente l'infini
+
+#define MAX_COLIS 100
+#define MAX_VEHICULES 10
+#define MAX_TOURNEE 50
+#define MAX_VILLES 20
+#define FLT_MAX 3.40282347E+38F // Valeur maximale pour un float
+#define INF 1e9                 // Représente l'infini
+
 #include "cJSON/cJSON.h" // Inclure la bibliothèque cJSON
 
 // Définition des structures
@@ -314,7 +321,7 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 // Fonction pour afficher le chemin le plus court
 void printBellmanResults(Graph *graph, int src, float *dist, int *pred)
 {
-    printf("\n===== Chemins optimaux depuis %s (avec contraintes) =====\n", graph->cityNames[src]);
+    printf("\n===== Chemins optimaux depuis %s =====\n", graph->cityNames[src]);
 
     for (int i = 0; i < graph->V; i++)
     {
@@ -359,6 +366,108 @@ void printBellmanResults(Graph *graph, int src, float *dist, int *pred)
     }
 }
 
+// >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
+// ---------- STRUCTURES DE DONNEES ----------
+typedef struct
+{
+    int id;
+    int villeDest;
+    float poids;
+    float volume;
+    int urgent; // 1 si urgent, 0 sinon
+} Colis;
+
+typedef struct
+{
+    int id;
+    float capaciteMax;
+    float capaciteRestante;
+    int villeActuelle;
+    int tournee[MAX_TOURNEE];
+    int nbLivraisons;
+} Vehicule;
+
+typedef struct
+{
+    float distances[MAX_VILLES][MAX_VILLES]; // Matrice de distances entre villes
+} Carte;
+
+// ---------- EXEMPLE DE DONNEES ----------
+void initialiserCarte(Carte *carte)
+{
+    for (int i = 0; i < MAX_VILLES; i++)
+        for (int j = 0; j < MAX_VILLES; j++)
+            carte->distances[i][j] = (i == j) ? 0 : (rand() % 50 + 1); // distances aléatoires
+}
+
+void chargerColis(Colis *colis, int *nbColis)
+{
+    *nbColis = 5;
+    colis[0] = (Colis){0, 2, 10.0, 5.0, 0};
+    colis[1] = (Colis){1, 4, 20.0, 10.0, 1};
+    colis[2] = (Colis){2, 1, 15.0, 8.0, 0};
+    colis[3] = (Colis){3, 3, 12.0, 6.0, 0};
+    colis[4] = (Colis){4, 2, 8.0, 3.0, 1};
+}
+
+void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
+{
+    *nbVehicules = 2;
+    vehicules[0] = (Vehicule){0, 40.0, 40.0, 0, {}, 0};
+    vehicules[1] = (Vehicule){1, 30.0, 30.0, 0, {}, 0};
+}
+
+// ---------- AFFECTATION GLOUTONNE ----------
+void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte)
+{
+    printf("\n===== Affectation des colis aux véhicules =====\n");
+    for (int i = 0; i < nbColis; i++)
+    {
+        float minDistance = FLT_MAX;
+        int bestVehicule = -1;
+
+        for (int j = 0; j < nbVehicules; j++)
+        {
+            if (vehicules[j].capaciteRestante >= colis[i].poids)
+            {
+                float d = carte->distances[vehicules[j].villeActuelle][colis[i].villeDest];
+                if (d < minDistance)
+                {
+                    minDistance = d;
+                    bestVehicule = j;
+                }
+            }
+        }
+
+        if (bestVehicule != -1)
+        {
+            vehicules[bestVehicule].capaciteRestante -= colis[i].poids;
+            vehicules[bestVehicule].tournee[vehicules[bestVehicule].nbLivraisons++] = colis[i].villeDest;
+            printf("Colis %d affecté au véhicule %d (ville %d, distance %.1f)\n",
+                   colis[i].id, bestVehicule, colis[i].villeDest, minDistance);
+        }
+        else
+        {
+            printf("Colis %d non assigné : aucun véhicule disponible\n", colis[i].id);
+        }
+    }
+}
+
+// ---------- AFFICHAGE TOURNEE ----------
+void afficherTournees(Vehicule *vehicules, int nbVehicules)
+{
+    printf("\n===== Tournées des véhicules =====\n");
+    for (int i = 0; i < nbVehicules; i++)
+    {
+        printf("Tournée du véhicule %d : ", vehicules[i].id);
+        for (int j = 0; j < vehicules[i].nbLivraisons; j++)
+        {
+            printf("-> Ville %d ", vehicules[i].tournee[j]);
+        }
+        printf("\n");
+    }
+}
+
 // Programme principal
 int main(int argc, char *argv[])
 {
@@ -386,6 +495,20 @@ int main(int argc, char *argv[])
 
     bellmanFord(graph, src, dist, pred, maxTime);
     printBellmanResults(graph, src, dist, pred);
+
+    // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
+
+    Colis colis[MAX_COLIS];
+    Vehicule vehicules[MAX_VEHICULES];
+    Carte carte;
+    int nbColis, nbVehicules;
+
+    initialiserCarte(&carte);
+    chargerColis(colis, &nbColis);
+    chargerVehicules(vehicules, &nbVehicules);
+
+    affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
+    afficherTournees(vehicules, nbVehicules);
 
     freeGraph(graph);
 
