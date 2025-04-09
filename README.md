@@ -9,6 +9,7 @@ Ce programme est conçu pour simuler et optimiser les trajets logistiques entre 
 - `main.c` — Code source principal du programme
 - `graph.json` — Fichier de configuration du graphe
 - `cJSON/` — Dossier contenant la bibliothèque cJSON pour lire les fichiers JSON
+- `README.md` — Manuel d'utilisation du projet
 
 ---
 
