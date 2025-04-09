@@ -482,19 +482,19 @@ int main(int argc, char *argv[])
     printGraph(graph);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
-    // float dist[graph->V][graph->V];
-    // floydWarshall(graph, dist);
-    // printAllPairsShortestPaths(graph, dist);
+    float dist[graph->V][graph->V];
+    floydWarshall(graph, dist);
+    printAllPairsShortestPaths(graph, dist);
 
     // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
-    int src = 0;         // Abidjan
-    float maxTime = 400; // En minutes, par exemple
+    // int src = 0;         // Abidjan
+    // float maxTime = 400; // En minutes, par exemple
 
-    float dist[graph->V];
-    int pred[graph->V];
+    // float dist[graph->V];
+    // int pred[graph->V];
 
-    bellmanFord(graph, src, dist, pred, maxTime);
-    printBellmanResults(graph, src, dist, pred);
+    // bellmanFord(graph, src, dist, pred, maxTime);
+    // printBellmanResults(graph, src, dist, pred);
 
     // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
 
