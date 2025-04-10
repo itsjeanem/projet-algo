@@ -262,14 +262,17 @@ void printAllPairsShortestPaths(Graph *graph, float dist[][graph->V])
 void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 {
     int V = graph->V;
+    float time[V]; // Array to track cumulative time
 
     // Initialisation
     for (int i = 0; i < V; i++)
     {
         dist[i] = INF;
+        time[i] = INF;
         pred[i] = -1;
     }
     dist[src] = 0;
+    time[src] = 0;
 
     // Relaxation des arêtes V-1 fois
     for (int i = 1; i <= V - 1; i++)
@@ -281,14 +284,14 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
             {
                 int v = node->dest;
 
-                // float weight = node->attr.distance; // ou node->attr.cost / baseTime
                 float weight = node->attr.cost + 10 * node->attr.toll;
-                float time = node->attr.baseTime;
+                float edgeTime = node->attr.baseTime;
 
                 // Appliquer une contrainte sur le temps
-                if (time <= maxTime && dist[u] + weight < dist[v])
+                if (time[u] + edgeTime <= maxTime && dist[u] + weight < dist[v])
                 {
                     dist[v] = dist[u] + weight;
+                    time[v] = time[u] + edgeTime; // Update cumulative time
                     pred[v] = u;
                 }
 
@@ -304,10 +307,10 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
         while (node)
         {
             int v = node->dest;
-            // float weight = node->attr.distance;
             float weight = node->attr.cost + 10 * node->attr.toll;
+            float edgeTime = node->attr.baseTime;
 
-            if (dist[u] + weight < dist[v])
+            if (time[u] + edgeTime <= maxTime && dist[u] + weight < dist[v])
             {
                 printf("Attention : présence d’un cycle de poids négatif.\n");
                 return;
@@ -488,7 +491,7 @@ int main(int argc, char *argv[])
 
     // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
     int src = 0;         // Abidjan
-    float maxTime = 400; // En minutes, par exemple
+    float maxTime = 300; // En minutes, par exemple
 
     float dist[graph->V];
     int pred[graph->V];
