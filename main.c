@@ -6,7 +6,7 @@
 #define MAX_COLIS 100
 #define MAX_VEHICULES 10
 #define MAX_TOURNEE 50
-#define MAX_VILLES 20
+#define MAX_VILLES 14
 #define FLT_MAX 3.40282347E+38F // Valeur maximale pour un float
 #define INF 1e9                 // Représente l'infini
 
@@ -482,33 +482,34 @@ int main(int argc, char *argv[])
     printGraph(graph);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
-    float dist[graph->V][graph->V];
-    floydWarshall(graph, dist);
-    printAllPairsShortestPaths(graph, dist);
+    // float dist[graph->V][graph->V];
+    // floydWarshall(graph, dist);
+    // printAllPairsShortestPaths(graph, dist);
 
     // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
-    // int src = 0;         // Abidjan
-    // float maxTime = 400; // En minutes, par exemple
+    int src = 0;         // Abidjan
+    float maxTime = 400; // En minutes, par exemple
 
-    // float dist[graph->V];
-    // int pred[graph->V];
+    float dist[graph->V];
+    int pred[graph->V];
 
-    // bellmanFord(graph, src, dist, pred, maxTime);
-    // printBellmanResults(graph, src, dist, pred);
+    bellmanFord(graph, src, dist, pred, maxTime);
+    printBellmanResults(graph, src, dist, pred);
 
     // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
+    // Colis colis[MAX_COLIS];
+    // Vehicule vehicules[MAX_VEHICULES];
+    // Carte carte;
+    // int nbColis, nbVehicules;
 
-    Colis colis[MAX_COLIS];
-    Vehicule vehicules[MAX_VEHICULES];
-    Carte carte;
-    int nbColis, nbVehicules;
+    // initialiserCarte(&carte);
+    // chargerColis(colis, &nbColis);
+    // chargerVehicules(vehicules, &nbVehicules);
 
-    initialiserCarte(&carte);
-    chargerColis(colis, &nbColis);
-    chargerVehicules(vehicules, &nbVehicules);
+    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
+    // afficherTournees(vehicules, nbVehicules);
 
-    affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
-    afficherTournees(vehicules, nbVehicules);
+    // Libération de la mémoire
 
     freeGraph(graph);
 
