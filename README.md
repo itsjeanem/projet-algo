@@ -30,4 +30,5 @@ cd "/c/emplacement fichier" && gcc main.c cJSON/cJSON.c -o main && "/c/emplaceme
 
 - **Affichage du graphe** : Le programme affiche les villes et leurs connexions avec les distances et coûts associés.
 - **Calcul des plus courts chemins** : Utilise l'algorithme de Floyd-Warshall pour trouver les plus courts chemins entre toutes les paires de villes.
+- **Gestions des contraintes** : Utilise l'algorithme de Bellman-Ford pour trouver les chemins optimaux depuis une ville.
 - **Optimisation logistique** : Intègre un modèle gloutonne pour affecter les colis aux véhicules en fonction des distances et des capacités.
