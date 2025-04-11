@@ -46,33 +46,38 @@ typedef struct Graph
     char **cityNames; // Tableau des noms des villes
 } Graph;
 
-Graph *createGraph(int V)
+// ---------- STRUCTURES DE DONNEES GLOUTONNE  ----------
+typedef struct Colis
 {
-    Graph *graph = (Graph *)malloc(sizeof(Graph));
-    graph->V = V;
-    graph->array = (AdjList *)malloc(V * sizeof(AdjList));
-    graph->cityNames = (char **)malloc(V * sizeof(char *)); // Allouer un tableau de chaînes
+    int id;
+    int villeDest;
+    float poids;
+    float volume;
+    int urgent; // 1 si urgent, 0 sinon
+} Colis;
 
-    for (int i = 0; i < V; i++)
-    {
-        graph->array[i].head = NULL;
-        graph->cityNames[i] = NULL; // Initialiser à NULL
-    }
-
-    return graph;
-}
-
-// Fonction pour ajouter une arête au graphe
-void addEdge(Graph *graph, int src, int dest, EdgeAttr attr)
+typedef struct Vehicule
 {
-    AdjListNode *newNode = (AdjListNode *)malloc(sizeof(AdjListNode));
-    newNode->dest = dest;
-    newNode->attr = attr;
-    newNode->next = graph->array[src].head;
-    graph->array[src].head = newNode;
-}
+    int id;
+    float capaciteMax;
+    float capaciteRestante;
+    int villeActuelle;
+    int tournee[MAX_TOURNEE];
+    int nbLivraisons;
+} Vehicule;
 
-// Fonction pour lire un fichier et retourner son contenu
+typedef struct Carte
+{
+    float distances[MAX_VILLES][MAX_VILLES]; // Matrice de distances entre villes
+} Carte;
+
+// >>>>>>>>>> Graphe <<<<<<<<<<<
+Graph *createGraph(int V);
+void addEdge(Graph *graph, int src, int dest, EdgeAttr attr);
+void printGraph(Graph *graph);
+void freeGraph(Graph *graph);
+
+// Function to read a file and return its content
 char *readFile(const char *filename)
 {
     FILE *file = fopen(filename, "r");
@@ -94,7 +99,7 @@ char *readFile(const char *filename)
     return content;
 }
 
-// Fonction pour charger un graphe depuis un fichier JSON
+// Function to load a graph from a JSON file
 Graph *loadGraphFromJSON(const char *filename)
 {
     char *jsonData = readFile(filename);
@@ -111,7 +116,7 @@ Graph *loadGraphFromJSON(const char *filename)
 
     // Lire le nombre de sommets
     int V = cJSON_GetObjectItem(json, "vertices")->valueint;
-    Graph *graph = createGraph(V);
+    Graph *graph = createGraph(V); // No more implicit declaration error
 
     // Lire les noms des villes
     cJSON *nodes = cJSON_GetObjectItem(json, "nodes");
@@ -143,7 +148,7 @@ Graph *loadGraphFromJSON(const char *filename)
         attr.reliability = (float)cJSON_GetObjectItem(edge, "reliability")->valuedouble;
         attr.restrictions = cJSON_GetObjectItem(edge, "restrictions")->valueint;
 
-        addEdge(graph, src, dest, attr);
+        addEdge(graph, src, dest, attr); // No more implicit declaration error
     }
 
     cJSON_Delete(json);
@@ -151,7 +156,119 @@ Graph *loadGraphFromJSON(const char *filename)
     return graph;
 }
 
-// Modifier printGraph pour afficher les noms des villes
+// >>>>>>>>>> Floyd-Warshall <<<<<<<<<<<
+void floydWarshall(Graph *graph, float dist[][graph->V]);
+void printFloydWarshall(Graph *graph, float dist[][graph->V]);
+
+// >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
+void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime);
+void printBellmanFord(Graph *graph, int src, float *dist, int *pred);
+
+// >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
+void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte);
+void afficherTournees(Vehicule *vehicules, int nbVehicules);
+
+// ---------- EXEMPLE DE DONNEES ----------
+void initialiserCarte(Carte *carte)
+{
+    for (int i = 0; i < MAX_VILLES; i++)
+        for (int j = 0; j < MAX_VILLES; j++)
+            carte->distances[i][j] = (i == j) ? 0 : (rand() % 50 + 1); // distances aléatoires
+}
+
+void chargerColis(Colis *colis, int *nbColis)
+{
+    *nbColis = 5;
+    colis[0] = (Colis){0, 2, 10.0, 5.0, 0};
+    colis[1] = (Colis){1, 4, 20.0, 10.0, 1};
+    colis[2] = (Colis){2, 1, 15.0, 8.0, 0};
+    colis[3] = (Colis){3, 3, 12.0, 6.0, 0};
+    colis[4] = (Colis){4, 2, 8.0, 3.0, 1};
+}
+
+void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
+{
+    *nbVehicules = 2;
+    vehicules[0] = (Vehicule){0, 40.0, 40.0, 0, {}, 0};
+    vehicules[1] = (Vehicule){1, 30.0, 30.0, 0, {}, 0};
+}
+
+// Programme principal
+int main(int argc, char *argv[])
+{
+
+    Graph *graph = loadGraphFromJSON("graph.json");
+    if (!graph)
+    {
+        printf("Erreur lors du chargement du graphe.\n");
+        return 1;
+    }
+
+    printGraph(graph);
+
+    // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
+    // float dist[graph->V][graph->V];
+    // floydWarshall(graph, dist);
+    // printFloydWarshall(graph, dist);
+
+    // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
+    int src = 0;         // Abidjan
+    float maxTime = 300; // En minutes, par exemple
+
+    float dist[graph->V];
+    int pred[graph->V];
+
+    bellmanFord(graph, src, dist, pred, maxTime);
+    printBellmanFord(graph, src, dist, pred);
+
+    // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
+    // Colis colis[MAX_COLIS];
+    // Vehicule vehicules[MAX_VEHICULES];
+    // Carte carte;
+    // int nbColis, nbVehicules;
+
+    // initialiserCarte(&carte);
+    // chargerColis(colis, &nbColis);
+    // chargerVehicules(vehicules, &nbVehicules);
+
+    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
+    // afficherTournees(vehicules, nbVehicules);
+
+    // Libération de la mémoire
+
+    freeGraph(graph);
+
+    return 0;
+}
+
+// Fonction pour créer un graphe
+Graph *createGraph(int V)
+{
+    Graph *graph = (Graph *)malloc(sizeof(Graph));
+    graph->V = V;
+    graph->array = (AdjList *)malloc(V * sizeof(AdjList));
+    graph->cityNames = (char **)malloc(V * sizeof(char *)); // Allouer un tableau de chaînes
+
+    for (int i = 0; i < V; i++)
+    {
+        graph->array[i].head = NULL;
+        graph->cityNames[i] = NULL; // Initialiser à NULL
+    }
+
+    return graph;
+}
+
+// Fonction pour ajouter une arête au graphe
+void addEdge(Graph *graph, int src, int dest, EdgeAttr attr)
+{
+    AdjListNode *newNode = (AdjListNode *)malloc(sizeof(AdjListNode));
+    newNode->dest = dest;
+    newNode->attr = attr;
+    newNode->next = graph->array[src].head;
+    graph->array[src].head = newNode;
+}
+
+// Fonction pour afficher le graphe
 void printGraph(Graph *graph)
 {
     printf("--------------------------------------------------------\n");
@@ -202,7 +319,6 @@ void freeGraph(Graph *graph)
     free(graph);        // Libère la structure du graphe
 }
 
-// >>>>>>>>>> Floyd-Warshall <<<<<<<<<<<
 // Fonction pour trouver le chemin le plus court entre tous les paires de sommets
 void floydWarshall(Graph *graph, float dist[][graph->V])
 {
@@ -239,7 +355,7 @@ void floydWarshall(Graph *graph, float dist[][graph->V])
 }
 
 // Fonction pour afficher les distances
-void printAllPairsShortestPaths(Graph *graph, float dist[][graph->V])
+void printFloydWarshall(Graph *graph, float dist[][graph->V])
 {
     printf("\n===== Plus courts chemins entre toutes les paires de villes (en km) =====\n");
 
@@ -257,7 +373,6 @@ void printAllPairsShortestPaths(Graph *graph, float dist[][graph->V])
     }
 }
 
-// >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
 // Fonction pour trouver le chemin le plus court à partir d'une source
 void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 {
@@ -322,7 +437,7 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 }
 
 // Fonction pour afficher le chemin le plus court
-void printBellmanResults(Graph *graph, int src, float *dist, int *pred)
+void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
 {
     printf("\n===== Chemins optimaux depuis %s =====\n", graph->cityNames[src]);
 
@@ -367,57 +482,6 @@ void printBellmanResults(Graph *graph, int src, float *dist, int *pred)
             printf("\n");
         }
     }
-}
-
-// >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-// ---------- STRUCTURES DE DONNEES ----------
-typedef struct
-{
-    int id;
-    int villeDest;
-    float poids;
-    float volume;
-    int urgent; // 1 si urgent, 0 sinon
-} Colis;
-
-typedef struct
-{
-    int id;
-    float capaciteMax;
-    float capaciteRestante;
-    int villeActuelle;
-    int tournee[MAX_TOURNEE];
-    int nbLivraisons;
-} Vehicule;
-
-typedef struct
-{
-    float distances[MAX_VILLES][MAX_VILLES]; // Matrice de distances entre villes
-} Carte;
-
-// ---------- EXEMPLE DE DONNEES ----------
-void initialiserCarte(Carte *carte)
-{
-    for (int i = 0; i < MAX_VILLES; i++)
-        for (int j = 0; j < MAX_VILLES; j++)
-            carte->distances[i][j] = (i == j) ? 0 : (rand() % 50 + 1); // distances aléatoires
-}
-
-void chargerColis(Colis *colis, int *nbColis)
-{
-    *nbColis = 5;
-    colis[0] = (Colis){0, 2, 10.0, 5.0, 0};
-    colis[1] = (Colis){1, 4, 20.0, 10.0, 1};
-    colis[2] = (Colis){2, 1, 15.0, 8.0, 0};
-    colis[3] = (Colis){3, 3, 12.0, 6.0, 0};
-    colis[4] = (Colis){4, 2, 8.0, 3.0, 1};
-}
-
-void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
-{
-    *nbVehicules = 2;
-    vehicules[0] = (Vehicule){0, 40.0, 40.0, 0, {}, 0};
-    vehicules[1] = (Vehicule){1, 30.0, 30.0, 0, {}, 0};
 }
 
 // ---------- AFFECTATION GLOUTONNE ----------
@@ -469,52 +533,4 @@ void afficherTournees(Vehicule *vehicules, int nbVehicules)
         }
         printf("\n");
     }
-}
-
-// Programme principal
-int main(int argc, char *argv[])
-{
-
-    Graph *graph = loadGraphFromJSON("graph.json");
-    if (!graph)
-    {
-        printf("Erreur lors du chargement du graphe.\n");
-        return 1;
-    }
-
-    printGraph(graph);
-
-    // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
-    // float dist[graph->V][graph->V];
-    // floydWarshall(graph, dist);
-    // printAllPairsShortestPaths(graph, dist);
-
-    // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
-    int src = 0;         // Abidjan
-    float maxTime = 300; // En minutes, par exemple
-
-    float dist[graph->V];
-    int pred[graph->V];
-
-    bellmanFord(graph, src, dist, pred, maxTime);
-    printBellmanResults(graph, src, dist, pred);
-
-    // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-    // Colis colis[MAX_COLIS];
-    // Vehicule vehicules[MAX_VEHICULES];
-    // Carte carte;
-    // int nbColis, nbVehicules;
-
-    // initialiserCarte(&carte);
-    // chargerColis(colis, &nbColis);
-    // chargerVehicules(vehicules, &nbVehicules);
-
-    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
-    // afficherTournees(vehicules, nbVehicules);
-
-    // Libération de la mémoire
-
-    freeGraph(graph);
-
-    return 0;
 }
