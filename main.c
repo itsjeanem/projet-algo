@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define MAX_COLIS 100
 #define MAX_VEHICULES 10
@@ -165,8 +166,8 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime);
 void printBellmanFord(Graph *graph, int src, float *dist, int *pred);
 
 // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte);
-void afficherTournees(Vehicule *vehicules, int nbVehicules);
+void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte, Graph *graph);
+void afficherTournees(Vehicule *vehicules, int nbVehicules, Graph *graph);
 
 // ---------- EXEMPLE DE DONNEES ----------
 void initialiserCarte(Carte *carte)
@@ -178,22 +179,35 @@ void initialiserCarte(Carte *carte)
 
 void chargerColis(Colis *colis, int *nbColis)
 {
-    *nbColis = 5;
-    colis[0] = (Colis){0, 2, 10.0, 5.0, 0};
-    colis[1] = (Colis){1, 4, 20.0, 10.0, 1};
-    colis[2] = (Colis){2, 1, 15.0, 8.0, 0};
-    colis[3] = (Colis){3, 3, 12.0, 6.0, 0};
-    colis[4] = (Colis){4, 2, 8.0, 3.0, 1};
+    *nbColis = 20;
+    srand(time(NULL)); // Seed for random number generation
+    for (int i = 0; i < *nbColis; i++)
+    {
+        colis[i].id = i;
+        colis[i].villeDest = rand() % MAX_VILLES;
+        colis[i].poids = (float)(rand() % 50 + 1);
+        colis[i].volume = (float)(rand() % 20 + 1);
+        colis[i].urgent = rand() % 2;
+    }
 }
 
 void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
 {
-    *nbVehicules = 2;
-    vehicules[0] = (Vehicule){0, 40.0, 40.0, 0, {}, 0};
-    vehicules[1] = (Vehicule){1, 30.0, 30.0, 0, {}, 0};
+    *nbVehicules = 10;
+    srand(time(NULL)); // Seed for random number generation
+    for (int i = 0; i < *nbVehicules; i++)
+    {
+        vehicules[i].id = i;
+        vehicules[i].capaciteMax = (float)(rand() % 100 + 1);
+        vehicules[i].capaciteRestante = vehicules[i].capaciteMax;
+        vehicules[i].villeActuelle = rand() % MAX_VILLES;
+        vehicules[i].nbLivraisons = 0;
+    }
 }
 
-// Programme principal
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> FONCTION PRINCIPALE
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 int main(int argc, char *argv[])
 {
 
@@ -212,30 +226,29 @@ int main(int argc, char *argv[])
     // printFloydWarshall(graph, dist);
 
     // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
-    int src = 0;         // Abidjan
-    float maxTime = 300; // En minutes, par exemple
+    // int src = 0;         // Abidjan
+    // float maxTime = 300; // En minutes, par exemple
 
-    float dist[graph->V];
-    int pred[graph->V];
+    // float dist[graph->V];
+    // int pred[graph->V];
 
-    bellmanFord(graph, src, dist, pred, maxTime);
-    printBellmanFord(graph, src, dist, pred);
+    // bellmanFord(graph, src, dist, pred, maxTime);
+    // printBellmanFord(graph, src, dist, pred);
 
     // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-    // Colis colis[MAX_COLIS];
-    // Vehicule vehicules[MAX_VEHICULES];
-    // Carte carte;
-    // int nbColis, nbVehicules;
+    Colis colis[MAX_COLIS];
+    Vehicule vehicules[MAX_VEHICULES];
+    Carte carte;
+    int nbColis, nbVehicules;
 
-    // initialiserCarte(&carte);
-    // chargerColis(colis, &nbColis);
-    // chargerVehicules(vehicules, &nbVehicules);
+    initialiserCarte(&carte);
+    chargerColis(colis, &nbColis);
+    chargerVehicules(vehicules, &nbVehicules);
 
-    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte);
-    // afficherTournees(vehicules, nbVehicules);
+    affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
+    afficherTournees(vehicules, nbVehicules, graph);
 
     // Libération de la mémoire
-
     freeGraph(graph);
 
     return 0;
@@ -485,7 +498,7 @@ void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
 }
 
 // ---------- AFFECTATION GLOUTONNE ----------
-void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte)
+void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte, Graph *graph)
 {
     printf("\n===== Affectation des colis aux véhicules =====\n");
     for (int i = 0; i < nbColis; i++)
@@ -493,6 +506,7 @@ void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbCol
         float minDistance = FLT_MAX;
         int bestVehicule = -1;
 
+        // Trouver le meilleur véhicule pour le colis
         for (int j = 0; j < nbVehicules; j++)
         {
             if (vehicules[j].capaciteRestante >= colis[i].poids)
@@ -506,22 +520,23 @@ void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbCol
             }
         }
 
+        // Affecter le colis au véhicule trouvé
         if (bestVehicule != -1)
         {
             vehicules[bestVehicule].capaciteRestante -= colis[i].poids;
             vehicules[bestVehicule].tournee[vehicules[bestVehicule].nbLivraisons++] = colis[i].villeDest;
-            printf("Colis %d affecté au véhicule %d (ville %d, distance %.1f)\n",
-                   colis[i].id, bestVehicule, colis[i].villeDest, minDistance);
+            printf("Colis %d affecté au véhicule %d (destination : %s, distance : %.1f km)\n",
+                   colis[i].id, bestVehicule, graph->cityNames[colis[i].villeDest], minDistance);
         }
         else
         {
-            printf("Colis %d non assigné : aucun véhicule disponible\n", colis[i].id);
+            printf("Colis %d non assigné : aucun véhicule disponible avec la capacité suffisante\n", colis[i].id);
         }
     }
 }
 
 // ---------- AFFICHAGE TOURNEE ----------
-void afficherTournees(Vehicule *vehicules, int nbVehicules)
+void afficherTournees(Vehicule *vehicules, int nbVehicules, Graph *graph)
 {
     printf("\n===== Tournées des véhicules =====\n");
     for (int i = 0; i < nbVehicules; i++)
@@ -529,7 +544,7 @@ void afficherTournees(Vehicule *vehicules, int nbVehicules)
         printf("Tournée du véhicule %d : ", vehicules[i].id);
         for (int j = 0; j < vehicules[i].nbLivraisons; j++)
         {
-            printf("-> Ville %d ", vehicules[i].tournee[j]);
+            printf("-> %s ", graph->cityNames[vehicules[i].tournee[j]]);
         }
         printf("\n");
     }
