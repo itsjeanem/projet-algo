@@ -161,6 +161,9 @@ Graph *loadGraphFromJSON(const char *filename)
 void dfsUtil(Graph *graph, int v, bool *visited);
 void dfs(Graph *graph, int startVertex);
 
+// >>>>>>>>>> BFS <<<<<<<<<<<
+void bfs(Graph *graph, int startVertex);
+
 // >>>>>>>>>> Floyd-Warshall <<<<<<<<<<<
 void floydWarshall(Graph *graph, float dist[][graph->V]);
 void printFloydWarshall(Graph *graph, float dist[][graph->V]);
@@ -226,6 +229,9 @@ int main(int argc, char *argv[])
 
     // Appel de DFS à partir du sommet 0 (par exemple, Abidjan)
     dfs(graph, 0);
+
+    // Appel de BFS à partir du sommet 0 (par exemple, Abidjan)
+    bfs(graph, 0);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
     // float dist[graph->V][graph->V];
@@ -378,6 +384,53 @@ void dfs(Graph *graph, int startVertex)
 
     // Libérer la mémoire
     free(visited);
+}
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> BFS ALGORITHM
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Fonction pour effectuer un parcours en largeur (BFS) à partir d'un sommet donné
+void bfs(Graph *graph, int startVertex)
+{
+    // Créer un tableau pour suivre les sommets visités
+    bool *visited = (bool *)malloc(graph->V * sizeof(bool));
+    for (int i = 0; i < graph->V; i++)
+        visited[i] = false;
+
+    // Créer une file pour le BFS
+    int *queue = (int *)malloc(graph->V * sizeof(int));
+    int front = 0, rear = 0;
+
+    // Marquer le sommet de départ comme visité et l'ajouter à la file
+    visited[startVertex] = true;
+    queue[rear++] = startVertex;
+
+    printf("Parcours en largeur (BFS) à partir de %s :\n", graph->cityNames[startVertex]);
+
+    while (front < rear)
+    {
+        // Extraire un sommet de la file
+        int currentVertex = queue[front++];
+        printf("%s ", graph->cityNames[currentVertex]);
+
+        // Parcourir tous les voisins du sommet actuel
+        AdjListNode *node = graph->array[currentVertex].head;
+        while (node)
+        {
+            if (!visited[node->dest])
+            {
+                visited[node->dest] = true;
+                queue[rear++] = node->dest;
+            }
+            node = node->next;
+        }
+    }
+
+    printf("\n");
+
+    // Libérer la mémoire
+    free(visited);
+    free(queue);
 }
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
