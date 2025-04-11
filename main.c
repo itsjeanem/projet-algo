@@ -345,6 +345,25 @@ void freeGraph(Graph *graph)
     free(graph);        // Libère la structure du graphe
 }
 
+/**
+ * - **Pile implicite (DFS)** :
+ *   L'algorithme DFS utilise une pile implicite via l'appel récursif de la fonction `dfsUtil`.
+ *   Ce choix est justifié par la simplicité et la lisibilité du code, car la pile d'exécution
+ *   du programme gère automatiquement les appels récursifs. Cependant, cette approche peut
+ *   entraîner un dépassement de pile (stack overflow) pour des graphes très grands ou très profonds.
+ *
+ * - **File explicite (BFS)** :
+ *   L'algorithme BFS utilise une file explicite implémentée à l'aide d'un tableau dynamique
+ *   (int *queue) et de deux indices (`front` et `rear`) pour gérer les opérations d'enfilement
+ *   et de défilement. Ce choix est justifié par la nécessité de traiter les sommets dans l'ordre
+ *   dans lequel ils sont découverts, ce qui est une caractéristique clé du BFS. L'utilisation
+ *   d'un tableau dynamique permet une gestion simple et efficace de la file.
+ *
+ * @note Les structures auxiliaires (pile implicite et file explicite) sont adaptées aux besoins
+ * spécifiques des algorithmes DFS et BFS respectivement, garantissant une implémentation efficace
+ * et conforme aux principes de ces parcours.
+ */
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // >>> DFS ALGORITHM
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
