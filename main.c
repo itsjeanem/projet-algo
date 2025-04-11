@@ -157,6 +157,10 @@ Graph *loadGraphFromJSON(const char *filename)
     return graph;
 }
 
+// >>>>>>>>>> DFS <<<<<<<<<<<
+void dfsUtil(Graph *graph, int v, bool *visited);
+void dfs(Graph *graph, int startVertex);
+
 // >>>>>>>>>> Floyd-Warshall <<<<<<<<<<<
 void floydWarshall(Graph *graph, float dist[][graph->V]);
 void printFloydWarshall(Graph *graph, float dist[][graph->V]);
@@ -220,6 +224,9 @@ int main(int argc, char *argv[])
 
     printGraph(graph);
 
+    // Appel de DFS à partir du sommet 0 (par exemple, Abidjan)
+    dfs(graph, 0);
+
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
     // float dist[graph->V][graph->V];
     // floydWarshall(graph, dist);
@@ -236,17 +243,17 @@ int main(int argc, char *argv[])
     // printBellmanFord(graph, src, dist, pred);
 
     // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-    Colis colis[MAX_COLIS];
-    Vehicule vehicules[MAX_VEHICULES];
-    Carte carte;
-    int nbColis, nbVehicules;
+    // Colis colis[MAX_COLIS];
+    // Vehicule vehicules[MAX_VEHICULES];
+    // Carte carte;
+    // int nbColis, nbVehicules;
 
-    initialiserCarte(&carte);
-    chargerColis(colis, &nbColis);
-    chargerVehicules(vehicules, &nbVehicules);
+    // initialiserCarte(&carte);
+    // chargerColis(colis, &nbColis);
+    // chargerVehicules(vehicules, &nbVehicules);
 
-    affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
-    afficherTournees(vehicules, nbVehicules, graph);
+    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
+    // afficherTournees(vehicules, nbVehicules, graph);
 
     // Libération de la mémoire
     freeGraph(graph);
@@ -332,6 +339,50 @@ void freeGraph(Graph *graph)
     free(graph);        // Libère la structure du graphe
 }
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> DFS ALGORITHM
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Fonction pour effectuer un parcours en profondeur (DFS) à partir d'un sommet donné
+void dfsUtil(Graph *graph, int v, bool *visited)
+{
+    // Marquer le sommet actuel comme visité
+    visited[v] = true;
+    printf("%s ", graph->cityNames[v]);
+
+    // Parcourir tous les voisins du sommet actuel
+    AdjListNode *node = graph->array[v].head;
+    while (node)
+    {
+        if (!visited[node->dest])
+        {
+            dfsUtil(graph, node->dest, visited);
+        }
+        node = node->next;
+    }
+}
+
+// Fonction principale pour effectuer un DFS sur tout le graphe
+void dfs(Graph *graph, int startVertex)
+{
+    // Tableau pour suivre les sommets visités
+    bool *visited = (bool *)malloc(graph->V * sizeof(bool));
+    for (int i = 0; i < graph->V; i++)
+    {
+        visited[i] = false;
+    }
+
+    printf("Parcours en profondeur (DFS) à partir de %s :\n", graph->cityNames[startVertex]);
+    dfsUtil(graph, startVertex, visited);
+
+    printf("\n");
+
+    // Libérer la mémoire
+    free(visited);
+}
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> FLOYD-WARSHALL ALGORITHM
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Fonction pour trouver le chemin le plus court entre tous les paires de sommets
 void floydWarshall(Graph *graph, float dist[][graph->V])
 {
@@ -386,6 +437,9 @@ void printFloydWarshall(Graph *graph, float dist[][graph->V])
     }
 }
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> BELLMAN-FORD ALGORITHM
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Fonction pour trouver le chemin le plus court à partir d'une source
 void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 {
@@ -497,6 +551,9 @@ void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
     }
 }
 
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// >>> GLOUTONNE ALGORITHM
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // ---------- AFFECTATION GLOUTONNE ----------
 void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte, Graph *graph)
 {
