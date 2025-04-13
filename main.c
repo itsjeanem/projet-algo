@@ -126,9 +126,20 @@ Graph *loadGraphFromJSON(const char *filename)
         cJSON *node;
         cJSON_ArrayForEach(node, nodes)
         {
-            int index = atoi(node->string);                      // Convertir la clé en entier
-            graph->cityNames[index] = strdup(node->valuestring); // Copier le nom
+            int index = atoi(node->string); // Convertir la clé en entier
+            if (index >= 0 && index < V)
+            {
+                graph->cityNames[index] = strdup(node->valuestring); // Copier le nom
+            }
+            else
+            {
+                printf("Erreur : index de ville invalide (%d).\n", index);
+            }
         }
+    }
+    else
+    {
+        printf("Erreur : 'nodes' manquant dans le fichier JSON.\n");
     }
 
     // Lire la liste des arêtes
@@ -212,6 +223,144 @@ void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
     }
 }
 
+// Détection de cycles
+bool dfsUtilCycle(Graph *graph, int v, bool *visited, int parent)
+{
+    visited[v] = true;
+    bool cycleFound = false;
+
+    AdjListNode *node = graph->array[v].head;
+    while (node)
+    {
+        int neighbor = node->dest;
+        if (!visited[neighbor])
+        {
+            cycleFound |= dfsUtilCycle(graph, neighbor, visited, v);
+        }
+        else if (neighbor != parent)
+        {
+            cycleFound = true;
+        }
+        node = node->next;
+    }
+    return cycleFound;
+}
+
+bool detectCycles(Graph *graph)
+{
+    bool *visited = malloc(graph->V * sizeof(bool));
+    for (int i = 0; i < graph->V; i++)
+        visited[i] = false;
+
+    bool hasCycle = false;
+    for (int i = 0; i < graph->V; i++)
+    {
+        if (!visited[i] && dfsUtilCycle(graph, i, visited, -1))
+        {
+            hasCycle = true;
+            break;
+        }
+    }
+    free(visited);
+    return hasCycle;
+}
+
+// Composantes connexes (BFS)
+void findConnectedComponents(Graph *graph)
+{
+    bool *visited = malloc(graph->V * sizeof(bool));
+    for (int i = 0; i < graph->V; i++)
+        visited[i] = false;
+
+    int componentCount = 0;
+    for (int i = 0; i < graph->V; i++)
+    {
+        if (!visited[i])
+        {
+            int *queue = malloc(graph->V * sizeof(int));
+            int front = 0, rear = 0;
+            queue[rear++] = i;
+            visited[i] = true;
+            componentCount++;
+
+            printf("Composante %d: ", componentCount);
+            while (front < rear)
+            {
+                int current = queue[front++];
+                printf("%s ", graph->cityNames[current]);
+                AdjListNode *node = graph->array[current].head;
+                while (node)
+                {
+                    if (!visited[node->dest])
+                    {
+                        visited[node->dest] = true;
+                        queue[rear++] = node->dest;
+                    }
+                    node = node->next;
+                }
+            }
+            printf("\n");
+            free(queue);
+        }
+    }
+    printf("Total: %d composantes\n", componentCount);
+    free(visited);
+}
+
+// Accessibilité entre deux nœuds
+bool isAccessible(Graph *graph, int src, int dest)
+{
+    bool *visited = malloc(graph->V * sizeof(bool));
+    for (int i = 0; i < graph->V; i++)
+        visited[i] = false;
+
+    int *queue = malloc(graph->V * sizeof(int));
+    int front = 0, rear = 0;
+    queue[rear++] = src;
+    visited[src] = true;
+
+    while (front < rear)
+    {
+        int current = queue[front++];
+        if (current == dest)
+        {
+            free(queue);
+            free(visited);
+            return true;
+        }
+        AdjListNode *node = graph->array[current].head;
+        while (node)
+        {
+            if (!visited[node->dest])
+            {
+                visited[node->dest] = true;
+                queue[rear++] = node->dest;
+            }
+            node = node->next;
+        }
+    }
+    free(queue);
+    free(visited);
+    return false;
+}
+
+// Statistiques de connectivité
+void calculateConnectivityStats(Graph *graph)
+{
+    int totalEdges = 0;
+    for (int i = 0; i < graph->V; i++)
+    {
+        AdjListNode *node = graph->array[i].head;
+        while (node)
+        {
+            totalEdges++;
+            node = node->next;
+        }
+    }
+    float density = (totalEdges * 100.0) / (graph->V * (graph->V - 1));
+    printf("Densité: %.2f%%\n", density);
+}
+
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // >>> FONCTION PRINCIPALE
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -225,13 +374,24 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    printGraph(graph);
+    // printGraph(graph);
+    // freeGraph(graph);
+
+    // Nouvelles fonctionnalités
+    printf("\n=== Analyse du réseau ===\n");
+    printf("Cycles détectés: %s\n", detectCycles(graph) ? "OUI" : "NON");
+    printf("\nComposantes connexes:\n");
+    findConnectedComponents(graph);
+    printf("\nAccessibilité Abidjan -> San-Pédro: %s\n",
+           isAccessible(graph, 0, 3) ? "OUI" : "NON");
+    printf("\nStatistiques:\n");
+    calculateConnectivityStats(graph);
 
     // Appel de DFS à partir du sommet 0 (par exemple, Abidjan)
-    dfs(graph, 0);
+    // dfs(graph, 0);
 
     // Appel de BFS à partir du sommet 0 (par exemple, Abidjan)
-    bfs(graph, 0);
+    // bfs(graph, 0);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
     // float dist[graph->V][graph->V];
@@ -261,9 +421,6 @@ int main(int argc, char *argv[])
     // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
     // afficherTournees(vehicules, nbVehicules, graph);
 
-    // Libération de la mémoire
-    freeGraph(graph);
-
     return 0;
 }
 
@@ -271,9 +428,23 @@ int main(int argc, char *argv[])
 Graph *createGraph(int V)
 {
     Graph *graph = (Graph *)malloc(sizeof(Graph));
+    if (!graph)
+    {
+        printf("Erreur : allocation mémoire échouée pour le graphe.\n");
+        return NULL;
+    }
+
     graph->V = V;
     graph->array = (AdjList *)malloc(V * sizeof(AdjList));
-    graph->cityNames = (char **)malloc(V * sizeof(char *)); // Allouer un tableau de chaînes
+    graph->cityNames = (char **)malloc(V * sizeof(char *));
+    if (!graph->array || !graph->cityNames)
+    {
+        printf("Erreur : allocation mémoire échouée pour les structures internes.\n");
+        free(graph->array);
+        free(graph->cityNames);
+        free(graph);
+        return NULL;
+    }
 
     for (int i = 0; i < V; i++)
     {
@@ -287,7 +458,19 @@ Graph *createGraph(int V)
 // Fonction pour ajouter une arête au graphe
 void addEdge(Graph *graph, int src, int dest, EdgeAttr attr)
 {
+    if (src < 0 || src >= graph->V || dest < 0 || dest >= graph->V)
+    {
+        printf("Erreur : arête invalide (%d -> %d).\n", src, dest);
+        return;
+    }
+
     AdjListNode *newNode = (AdjListNode *)malloc(sizeof(AdjListNode));
+    if (!newNode)
+    {
+        printf("Erreur : allocation mémoire échouée pour un nœud d'adjacence.\n");
+        return;
+    }
+
     newNode->dest = dest;
     newNode->attr = attr;
     newNode->next = graph->array[src].head;
