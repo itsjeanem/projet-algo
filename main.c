@@ -224,10 +224,9 @@ void chargerVehicules(Vehicule *vehicules, int *nbVehicules)
 }
 
 // Détection de cycles
-bool dfsUtilCycle(Graph *graph, int v, bool *visited, int parent)
+bool detectCycleDFS(Graph *graph, int v, bool *visited, int parent)
 {
     visited[v] = true;
-    bool cycleFound = false;
 
     AdjListNode *node = graph->array[v].head;
     while (node)
@@ -235,49 +234,69 @@ bool dfsUtilCycle(Graph *graph, int v, bool *visited, int parent)
         int neighbor = node->dest;
         if (!visited[neighbor])
         {
-            cycleFound |= dfsUtilCycle(graph, neighbor, visited, v);
+            if (detectCycleDFS(graph, neighbor, visited, v))
+                return true;
         }
         else if (neighbor != parent)
         {
-            cycleFound = true;
+            return true; // Cycle détecté
         }
         node = node->next;
     }
-    return cycleFound;
+    return false;
 }
 
 bool detectCycles(Graph *graph)
 {
     bool *visited = malloc(graph->V * sizeof(bool));
+    if (!visited)
+    {
+        printf("Erreur : allocation mémoire échouée pour le tableau 'visited'.\n");
+        return false;
+    }
+
     for (int i = 0; i < graph->V; i++)
         visited[i] = false;
 
-    bool hasCycle = false;
     for (int i = 0; i < graph->V; i++)
     {
-        if (!visited[i] && dfsUtilCycle(graph, i, visited, -1))
+        if (!visited[i] && detectCycleDFS(graph, i, visited, -1))
         {
-            hasCycle = true;
-            break;
+            free(visited);
+            return true;
         }
     }
+
     free(visited);
-    return hasCycle;
+    return false;
 }
 
 // Composantes connexes (BFS)
 void findConnectedComponents(Graph *graph)
 {
     bool *visited = malloc(graph->V * sizeof(bool));
+    if (!visited)
+    {
+        printf("Erreur : allocation mémoire échouée pour le tableau 'visited'.\n");
+        return;
+    }
+
     for (int i = 0; i < graph->V; i++)
         visited[i] = false;
+
+    int *queue = malloc(graph->V * sizeof(int));
+    if (!queue)
+    {
+        printf("Erreur : allocation mémoire échouée pour la file.\n");
+        free(visited);
+        return;
+    }
 
     int componentCount = 0;
     for (int i = 0; i < graph->V; i++)
     {
         if (!visited[i])
         {
-            int *queue = malloc(graph->V * sizeof(int));
             int front = 0, rear = 0;
             queue[rear++] = i;
             visited[i] = true;
@@ -288,6 +307,7 @@ void findConnectedComponents(Graph *graph)
             {
                 int current = queue[front++];
                 printf("%s ", graph->cityNames[current]);
+
                 AdjListNode *node = graph->array[current].head;
                 while (node)
                 {
@@ -300,21 +320,41 @@ void findConnectedComponents(Graph *graph)
                 }
             }
             printf("\n");
-            free(queue);
         }
     }
+
     printf("Total: %d composantes\n", componentCount);
+    free(queue);
     free(visited);
 }
 
 // Accessibilité entre deux nœuds
 bool isAccessible(Graph *graph, int src, int dest)
 {
+    if (src < 0 || src >= graph->V || dest < 0 || dest >= graph->V)
+    {
+        printf("Erreur : sommets source ou destination invalides.\n");
+        return false;
+    }
+
     bool *visited = malloc(graph->V * sizeof(bool));
+    if (!visited)
+    {
+        printf("Erreur : allocation mémoire échouée pour le tableau 'visited'.\n");
+        return false;
+    }
+
     for (int i = 0; i < graph->V; i++)
         visited[i] = false;
 
     int *queue = malloc(graph->V * sizeof(int));
+    if (!queue)
+    {
+        printf("Erreur : allocation mémoire échouée pour la file.\n");
+        free(visited);
+        return false;
+    }
+
     int front = 0, rear = 0;
     queue[rear++] = src;
     visited[src] = true;
@@ -328,6 +368,7 @@ bool isAccessible(Graph *graph, int src, int dest)
             free(visited);
             return true;
         }
+
         AdjListNode *node = graph->array[current].head;
         while (node)
         {
@@ -339,6 +380,7 @@ bool isAccessible(Graph *graph, int src, int dest)
             node = node->next;
         }
     }
+
     free(queue);
     free(visited);
     return false;
@@ -357,8 +399,16 @@ void calculateConnectivityStats(Graph *graph)
             node = node->next;
         }
     }
-    float density = (totalEdges * 100.0) / (graph->V * (graph->V - 1));
-    printf("Densité: %.2f%%\n", density);
+
+    if (graph->V > 1)
+    {
+        float density = (totalEdges * 100.0) / (graph->V * (graph->V - 1));
+        printf("Densité: %.2f%%\n", density);
+    }
+    else
+    {
+        printf("Densité: Non applicable (graphe avec moins de 2 sommets).\n");
+    }
 }
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -377,7 +427,13 @@ int main(int argc, char *argv[])
     // printGraph(graph);
     // freeGraph(graph);
 
-    // Nouvelles fonctionnalités
+    // Appel de DFS à partir du sommet 0 (par exemple, Abidjan)
+    dfs(graph, 0);
+
+    // Appel de BFS à partir du sommet 0 (par exemple, Abidjan)
+    bfs(graph, 0);
+
+    // Détecter les cycles dans le réseaus
     printf("\n=== Analyse du réseau ===\n");
     printf("Cycles détectés: %s\n", detectCycles(graph) ? "OUI" : "NON");
     printf("\nComposantes connexes:\n");
@@ -386,12 +442,6 @@ int main(int argc, char *argv[])
            isAccessible(graph, 0, 3) ? "OUI" : "NON");
     printf("\nStatistiques:\n");
     calculateConnectivityStats(graph);
-
-    // Appel de DFS à partir du sommet 0 (par exemple, Abidjan)
-    // dfs(graph, 0);
-
-    // Appel de BFS à partir du sommet 0 (par exemple, Abidjan)
-    // bfs(graph, 0);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
     // float dist[graph->V][graph->V];
