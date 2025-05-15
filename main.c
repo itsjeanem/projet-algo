@@ -771,7 +771,8 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
             {
                 int v = node->dest;
 
-                float weight = node->attr.cost + 10 * node->attr.toll;
+                // float weight = node->attr.cost + 10 * node->attr.toll;
+                float weight = node->attr.cost;
                 float edgeTime = node->attr.baseTime;
 
                 // Appliquer une contrainte sur le temps
@@ -794,7 +795,8 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
         while (node)
         {
             int v = node->dest;
-            float weight = node->attr.cost + 10 * node->attr.toll;
+            // float weight = node->attr.cost + 10 * node->attr.toll;
+            float weight = node->attr.cost;
             float edgeTime = node->attr.baseTime;
 
             if (time[u] + edgeTime <= maxTime && dist[u] + weight < dist[v])
@@ -840,7 +842,7 @@ void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
                 if (node)
                 {
                     totalTime += node->attr.baseTime;
-                    totalCost += node->attr.cost + 10 * node->attr.toll;
+                    totalCost += node->attr.cost; // instead of node->attr.cost + 10 * node->attr.toll
                 }
             }
 
