@@ -444,32 +444,32 @@ int main(int argc, char *argv[])
     calculateConnectivityStats(graph);
 
     // >>>>>>>>> Floyd-Warshall <<<<<<<<<<<
-    // float dist[graph->V][graph->V];
-    // floydWarshall(graph, dist);
-    // printFloydWarshall(graph, dist);
+    float distFW[graph->V][graph->V];
+    floydWarshall(graph, distFW);
+    printFloydWarshall(graph, distFW);
 
     // >>>>>>>>>> Bellman-Ford <<<<<<<<<<<
-    // int src = 0;         // Abidjan
-    // float maxTime = 300; // En minutes, par exemple
+    int src = 0;         // Abidjan
+    float maxTime = 300; // En minutes, par exemple
 
-    // float dist[graph->V];
-    // int pred[graph->V];
+    float distBF[graph->V];
+    int pred[graph->V];
 
-    // bellmanFord(graph, src, dist, pred, maxTime);
-    // printBellmanFord(graph, src, dist, pred);
+    bellmanFord(graph, src, distBF, pred, maxTime);
+    printBellmanFord(graph, src, distBF, pred);
 
     // >>>>>>>>>> GLOUTONNE <<<<<<<<<<<
-    // Colis colis[MAX_COLIS];
-    // Vehicule vehicules[MAX_VEHICULES];
-    // Carte carte;
-    // int nbColis, nbVehicules;
+    Colis colis[MAX_COLIS];
+    Vehicule vehicules[MAX_VEHICULES];
+    Carte carte;
+    int nbColis, nbVehicules;
 
-    // initialiserCarte(&carte);
-    // chargerColis(colis, &nbColis);
-    // chargerVehicules(vehicules, &nbVehicules);
+    initialiserCarte(&carte);
+    chargerColis(colis, &nbColis);
+    chargerVehicules(vehicules, &nbVehicules);
 
-    // affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
-    // afficherTournees(vehicules, nbVehicules, graph);
+    affecterColis(vehicules, nbVehicules, colis, nbColis, &carte, graph);
+    afficherTournees(vehicules, nbVehicules, graph);
 
     return 0;
 }
