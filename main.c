@@ -726,7 +726,7 @@ void floydWarshall(Graph *graph, float dist[][graph->V])
 // Fonction pour afficher les distances
 void printFloydWarshall(Graph *graph, float dist[][graph->V])
 {
-    printf("\n===== Plus courts chemins entre toutes les paires de villes (en km) =====\n");
+    printf("\n===== Plus courts chemins entre toutes les paires de villes (en km) - FLOYD WARSHALL =====\n");
 
     for (int i = 0; i < graph->V; i++)
     {
@@ -813,7 +813,7 @@ void bellmanFord(Graph *graph, int src, float *dist, int *pred, float maxTime)
 // Fonction pour afficher le chemin le plus court
 void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
 {
-    printf("\n===== Chemins optimaux depuis %s =====\n", graph->cityNames[src]);
+    printf("\n===== Chemins optimaux depuis %s (BELLMAN-FORD) =====\n", graph->cityNames[src]);
 
     for (int i = 0; i < graph->V; i++)
     {
@@ -864,7 +864,7 @@ void printBellmanFord(Graph *graph, int src, float *dist, int *pred)
 // ---------- AFFECTATION GLOUTONNE ----------
 void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbColis, Carte *carte, Graph *graph)
 {
-    printf("\n===== Affectation des colis aux véhicules =====\n");
+    printf("\n===== Affectation des colis aux véhicules (GLOUTONNE) =====\n");
     for (int i = 0; i < nbColis; i++)
     {
         float minDistance = FLT_MAX;
@@ -902,7 +902,7 @@ void affecterColis(Vehicule *vehicules, int nbVehicules, Colis *colis, int nbCol
 // ---------- AFFICHAGE TOURNEE ----------
 void afficherTournees(Vehicule *vehicules, int nbVehicules, Graph *graph)
 {
-    printf("\n===== Tournées des véhicules =====\n");
+    printf("\n===== Tournées des véhicules (GLOUTONNE) =====\n");
     for (int i = 0; i < nbVehicules; i++)
     {
         printf("Tournée du véhicule %d : ", vehicules[i].id);
